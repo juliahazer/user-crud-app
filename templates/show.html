@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Show User
+{% endblock %}
+
+{% block content %}
+<h1>Here are the details about the user:</h1>
+
+<a href="{{url_for('edit', user_id=user.id)}}">Edit this user</a>
+<br>
+<form action="{{url_for('show', user_id=user.id)}}?_method=DELETE" method="POST">
+  <input type="submit" value="Delete this user"></input>
+</form>
+
+<br>
+<b>Username:</b> {{user.username}}<br>
+<b>Email:</b> {{user.email}}<br>
+<b>First Name:</b> {{user.first_name}}<br>
+<b>Last Name:</b> {{user.last_name}}
+
+<br><br>
+<a href="{{url_for('msg_index', user_id=user.id)}}">See user's messages</a>
+
+<br><br>
+<a href="{{url_for('index')}}">See all users</a>
+{% endblock %}

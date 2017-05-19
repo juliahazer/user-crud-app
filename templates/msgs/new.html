@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Messages: Add
+{% endblock %}
+
+{% block content %}
+<h1>Add a message for {{user.username}}:</h1>
+
+<form action="{{url_for('msg_index', user_id=user.id)}}" method="POST" id="messageForm">
+  <textarea form="messageForm" name="msg_text" id="msg_text" rows="10" cols="50"></textarea><br>
+  <input type="submit" value="Add Message">
+</form>
+
+<br><br>
+
+{% endblock %}
