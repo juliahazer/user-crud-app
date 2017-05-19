@@ -1,6 +1,7 @@
 from flask import Flask, render_template, redirect, request, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_modus import Modus
+import os
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://localhost/userdb'
@@ -139,5 +140,11 @@ def msg_edit(user_id, msg_id):
 
   return render_template('msgs/edit.html', user=user, message=message)
 
-if __name__ == "__main__":
-  app.run(debug=True, port=3000)
+# If we are in production, make sure we DO NOT use the debug mode
+if os.environ.get('ENV') == 'production':
+  debug = False
+else:
+  debug = True
+
+if __name__ == '__main__':
+  app.run(debug=debug, port=3000)
