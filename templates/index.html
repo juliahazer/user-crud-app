@@ -4,6 +4,11 @@ Users
 {% endblock %}
 
 {% block content %}
+
+{% for msg in get_flashed_messages() %}
+  <p>{{ msg }}</p>
+{% endfor %}
+
 <h1>Here are all the users:</h1>
 
   <ul>
