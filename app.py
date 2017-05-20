@@ -1,10 +1,11 @@
 from flask import Flask, render_template, redirect, request, url_for, flash
+from forms import UserForm, MessageForm #IMPORT ALL FUNCTIONS WITHIN FORM!!!
 from flask_sqlalchemy import SQLAlchemy
 from flask_modus import Modus
 import os
 
 app = Flask(__name__)
-#CSRF protection
+#CSRF protection but i think this does this locally only
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'postgres://localhost/userdb'
@@ -50,28 +51,24 @@ class Message(db.Model):
 def root():
   return redirect(url_for('index'))
 
-@app.route('/users', methods=['GET', 'POST'])
+@app.route('/users')
 def index():
-  if request.method == 'POST':
-    new_user = User(request.form['username'], request.form['email'], request.form['first_name'], request.form['last_name'])
-    db.session.add(new_user)
-    db.session.commit()
-    return redirect(url_for('index'))
-
   flash("Welcome!") #add flash message  
   users = User.query.all()
   return render_template('index.html', users = users)
 
-@app.route('/users/<int:user_id>', methods=["GET", "PATCH", "DELETE"])
+@app.route('/users/<int:user_id>', methods=["GET", 'PATCH', "DELETE"])
 def show(user_id):
   selected_user = User.query.get_or_404(user_id)
+  form = UserForm(request.form, obj=selected_user)
 
   #if updating the user
   if request.method == b'PATCH':
-    selected_user.username = request.form['username']
-    selected_user.email = request.form['email']
-    selected_user.first_name = request.form['first_name']
-    selected_user.last_name = request.form['last_name']
+    # selected_user.username = request.form['username']
+    # selected_user.email = request.form['email']
+    # selected_user.first_name = request.form['first_name']
+    # selected_user.last_name = request.form['last_name']
+    form.populate_obj(selected_user)
     db.session.add(selected_user)
     db.session.commit()
     return redirect(url_for('index'))
@@ -88,45 +85,56 @@ def show(user_id):
 @app.route('/users/<int:user_id>/edit')
 def edit(user_id):
   selected_user = User.query.get(user_id)
+  form = UserForm(obj=selected_user)
+  form.populate_obj(selected_user)
 
-  return render_template('edit.html', user=selected_user)
+  return render_template('edit.html', user=selected_user, form=form)
 
-@app.route('/users/new')
+@app.route('/users/new', methods=['GET', 'POST'])
 def new():
-  return render_template('new.html')
+  form = UserForm(request.form)
+
+  if request.method == 'POST' and form.validate():
+    new_user = User(form.username.data, form.email.data, form.first_name.data, form.last_name.data)
+    db.session.add(new_user)
+    db.session.commit()
+    return redirect(url_for('index'))
+
+  return render_template('new.html', form=form)
 
 
 #MESSAGES
 
-@app.route('/users/<int:user_id>/messages', methods=["GET", "POST"])
+@app.route('/users/<int:user_id>/messages')
 def msg_index(user_id):
-  if request.method == "POST":
-    new_msg = Message(request.form['msg_text'], user_id)
-    db.session.add(new_msg)
-    db.session.commit()
-    return redirect(url_for('msg_index', user_id=user_id))
+  # if request.method == "POST":
+  #   new_msg = Message(request.form['msg_text'], user_id)
+  #   db.session.add(new_msg)
+  #   db.session.commit()
+  #   return redirect(url_for('msg_index', user_id=user_id))
 
   #else just list the messages  
   user = User.query.get(user_id)
   messages = user.messages
   return render_template('msgs/index.html', messages=messages, user=user)
 
-@app.route('/users/<int:user_id>/messages/new')
+@app.route('/users/<int:user_id>/messages/new', methods=["GET", "POST"])
 def msg_new(user_id):
   user = User.query.get(user_id)
-  return render_template('msgs/new.html', user=user)
+  msg_form = MessageForm(request.form)
 
-@app.route('/users/<int:user_id>/messages/<int:msg_id>', methods=['PATCH', 'DELETE'])
+  if request.method == 'POST' and msg_form.validate():
+    new_msg = Message(msg_form.msg_text.data, user_id)
+    db.session.add(new_msg)
+    db.session.commit()
+    return redirect(url_for('msg_index', user_id=user_id))
+
+  return render_template('msgs/new.html', user=user, form=msg_form)
+
+@app.route('/users/<int:user_id>/messages/<int:msg_id>', methods=['GET', 'DELETE'])
 def msg_show(user_id,msg_id):
   user = User.query.get(user_id)
   message = Message.query.get(msg_id)
-
-  #update message
-  if request.method == b'PATCH':
-    message.msg_text = request.form['msg_text']
-    db.session.add(message)
-    db.session.commit()
-    return redirect(url_for('msg_index', user_id = user.id))
 
   #delete message
   if request.method == b'DELETE':
@@ -137,12 +145,23 @@ def msg_show(user_id,msg_id):
   #else, show the message
   return render_template('msgs/show.html', user=user, message=message)
 
-@app.route('/users/<int:user_id>/messages/<int:msg_id>/edit')
+@app.route('/users/<int:user_id>/messages/<int:msg_id>/edit', methods=['GET', 'PATCH'])
 def msg_edit(user_id, msg_id):
   user = User.query.get(user_id)
   message = Message.query.get(msg_id)
+  # msg_form = MessageForm(request.form)
 
-  return render_template('msgs/edit.html', user=user, message=message)
+  #update message
+  if request.method == b'PATCH':
+    message.msg_text = request.form['msg_text']
+    db.session.add(message)
+    db.session.commit()
+    return redirect(url_for('msg_index', user_id = user.id))
+
+  form = MessageForm(obj=message)
+  form.populate_obj(message)
+
+  return render_template('msgs/edit.html', user=user, message=message, form=form)
 
 # If we are in production, make sure we DO NOT use the debug mode
 if os.environ.get('ENV') == 'production':
