@@ -54,7 +54,7 @@ def root():
 @app.route('/users')
 def index():
   ##############HOW COULD I LIMIT THIS FLASH MESSAGE TO ONLY SHOW FOR THE INITIAL PAGE LOAD???#################
-  flash("Welcome to the site!") #add flash message  
+  # flash("Welcome to the site!")
   users = User.query.all()
   return render_template('index.html', users = users)
 
@@ -69,6 +69,7 @@ def show(user_id):
       form.populate_obj(selected_user)
       db.session.add(selected_user)
       db.session.commit()
+      flash("You edited this user.")
       return redirect(url_for('show', user_id = selected_user.id))
     #if violates unique field for username/email
     except IntegrityError as e:
@@ -86,10 +87,13 @@ def show(user_id):
   if request.method == b'DELETE':
     db.session.delete(selected_user)
     db.session.commit()
+    flash("You deleted the user: " + selected_user.username)
     return redirect(url_for('index'))
 
   #else show info about the user
-  return render_template('show.html', user=selected_user)
+  ######IF WANTED TO LOOP OVER VALUES IN INSTANCE#########
+  user_dict = dict((col, getattr(selected_user, col)) for col in selected_user.__table__.columns.keys())
+  return render_template('show.html', user=selected_user, user_dict = user_dict) 
 
 @app.route('/users/<int:user_id>/edit', methods=['GET'])
 def edit(user_id):
@@ -107,6 +111,7 @@ def new():
       new_user = User(form.username.data, form.email.data, form.first_name.data, form.last_name.data)
       db.session.add(new_user)
       db.session.commit()
+      flash("You added the user: " + new_user.username)
       return redirect(url_for('index'))
 
     #if violates unique field for username/email

@@ -5,11 +5,13 @@ Users
 
 {% block content %}
 <div class="container-fluid">
-  <div class="alert alert-warning">
-    {% for msg in get_flashed_messages() %}
-      <p class="text-center">{{ msg }}</p>
-    {% endfor %}
-  </div>
+  {% if get_flashed_messages() %}
+    <div class="alert alert-warning">
+      {% for msg in get_flashed_messages() %}
+        <p class="text-center">{{ msg }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
 
   <h1>Users List <a class="btn btn-default btnCustom" href="{{url_for('new')}}">Add a user</a></h1>
   <table class="table table-bordered">
