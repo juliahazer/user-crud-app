@@ -1,11 +1,12 @@
 from flask import Flask, render_template, redirect, request, url_for, flash
-from forms import UserForm, MessageForm #IMPORT ALL FUNCTIONS WITHIN FORM!!!
 from flask_sqlalchemy import SQLAlchemy
 from flask_modus import Modus
+from forms import UserForm, MessageForm
+from sqlalchemy.exc import IntegrityError
 import os
 
 app = Flask(__name__)
-#CSRF protection but i think this does this locally only
+
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'postgres://localhost/userdb'
@@ -16,7 +17,6 @@ modus = Modus(app)
 class User(db.Model):
   __tablename__ = "users"
 
-  #creates columns for the table
   id = db.Column(db.Integer, primary_key=True)
   username = db.Column(db.Text, unique=True, nullable=False)
   email = db.Column(db.Text, unique=True, nullable=False)
@@ -53,25 +53,34 @@ def root():
 
 @app.route('/users')
 def index():
-  flash("Welcome!") #add flash message  
+  ##############HOW COULD I LIMIT THIS FLASH MESSAGE TO ONLY SHOW FOR THE INITIAL PAGE LOAD???#################
+  flash("Welcome to the site!") #add flash message  
   users = User.query.all()
   return render_template('index.html', users = users)
 
-@app.route('/users/<int:user_id>', methods=["GET", 'PATCH', "DELETE"])
+@app.route('/users/<int:user_id>', methods=["GET", "PATCH", "DELETE"])
 def show(user_id):
   selected_user = User.query.get_or_404(user_id)
   form = UserForm(request.form, obj=selected_user)
 
-  #if updating the user
-  if request.method == b'PATCH':
-    # selected_user.username = request.form['username']
-    # selected_user.email = request.form['email']
-    # selected_user.first_name = request.form['first_name']
-    # selected_user.last_name = request.form['last_name']
-    form.populate_obj(selected_user)
-    db.session.add(selected_user)
-    db.session.commit()
-    return redirect(url_for('index'))
+  #if updating the user & form validates...
+  if request.method == b'PATCH' and form.validate():
+    try: 
+      form.populate_obj(selected_user)
+      db.session.add(selected_user)
+      db.session.commit()
+      return redirect(url_for('show', user_id = selected_user.id))
+    #if violates unique field for username/email
+    except IntegrityError as e:
+      if (str(e.orig.pgerror).find('username_key') != -1):
+        flash("Please enter a different username. This user already exists.")
+      else:
+        flash("Please enter a different email. This email already exists.")
+      db.session.rollback()
+      return render_template('edit.html', user=selected_user, form=form)
+  #if form isn't validating...
+  elif request.method == b'PATCH':
+      return render_template('edit.html', user=selected_user, form=form)
 
   #if deleting the user
   if request.method == b'DELETE':
@@ -82,11 +91,10 @@ def show(user_id):
   #else show info about the user
   return render_template('show.html', user=selected_user)
 
-@app.route('/users/<int:user_id>/edit')
+@app.route('/users/<int:user_id>/edit', methods=['GET'])
 def edit(user_id):
   selected_user = User.query.get(user_id)
-  form = UserForm(obj=selected_user)
-  form.populate_obj(selected_user)
+  form = UserForm(request.form, obj=selected_user)
 
   return render_template('edit.html', user=selected_user, form=form)
 
@@ -95,10 +103,18 @@ def new():
   form = UserForm(request.form)
 
   if request.method == 'POST' and form.validate():
-    new_user = User(form.username.data, form.email.data, form.first_name.data, form.last_name.data)
-    db.session.add(new_user)
-    db.session.commit()
-    return redirect(url_for('index'))
+    try:
+      new_user = User(form.username.data, form.email.data, form.first_name.data, form.last_name.data)
+      db.session.add(new_user)
+      db.session.commit()
+      return redirect(url_for('index'))
+
+    #if violates unique field for username/email
+    except IntegrityError as e:
+      if (str(e.orig.pgerror).find('username_key') != -1):
+        flash("Please enter a different username. This user already exists.")
+      else:
+        flash("Please enter a different email. This email already exists.")
 
   return render_template('new.html', form=form)
 
