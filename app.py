@@ -126,9 +126,15 @@ def new():
 
 #MESSAGES
 
+#lists ALL messages for ALL users
+@app.route('/users/messages')
+def msg_all_index():
+  messages = Message.query.all()
+  return render_template('msgs/all.html', messages=messages)
+
+#list the messages for a specific user  
 @app.route('/users/<int:user_id>/messages')
 def msg_index(user_id):
-  #list the messages  
   user = User.query.get(user_id)
   messages = user.messages
   return render_template('msgs/index.html', messages=messages, user=user)

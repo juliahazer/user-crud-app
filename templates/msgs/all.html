@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}
-Messages: {{user.username}} 
+Messages: All
 {% endblock %}
 
 {% block content %}
@@ -13,29 +13,27 @@ Messages: {{user.username}}
       {% endfor %}
     </div>
   {% endif %}
-  <h1>Messages for User: {{user.username}}</h1>
+  <h1>All Messages</h1>
 </div>
 
 <div class="container-fluid">
-    <a class="btn btn-default btnCustom" href="{{url_for('msg_new', user_id=user.id)}}">
-      Add a Message
-    </a>
-    <a class="btn btn-default btnCustom" href="{{url_for('show', user_id=user.id)}}">
-      Back to User
+    <a class="btn btn-default btnCustom" href="{{url_for('index')}}">
+      Back to All Users
     </a>
 </div>
 
 <br>
 
 <div class="container-fluid">
-  {% if messages.all() == [] %}
-    <p>There are no messages for this user.</p>
+  {% if messages == [] %}
+    <p>There are no messages.</p>
   {% endif %}
-  {% if messages.all() != [] %}
+  {% if messages != [] %}
     <table class="table table-bordered">
       <thead>
         <tr>
           <th></th>
+          <th>Username</th>
           <th>Message</th>
           <th></th>
         </tr>
@@ -44,10 +42,11 @@ Messages: {{user.username}}
         {% for message in messages %}
           <tr class="{{ loop.cycle('odd', 'even') }}">
             <td>{{ loop.index }}</td>
+            <td>{{ message.user_id }}</td>
             <td>{{ message.msg_text }}</td>
             <td>
-              <form action="{{url_for('msg_show', user_id=user.id, msg_id=message.id)}}?_method=DELETE" method="POST">
-                <a class="btn btn-default btnCustom" href="{{url_for('msg_edit', user_id=user.id, msg_id=message.id)}}">
+              <form action="{{url_for('msg_show', user_id=message.user_id, msg_id=message.id)}}?_method=DELETE" method="POST">
+                <a class="btn btn-default btnCustom" href="{{url_for('msg_edit', user_id=message.user_id, msg_id=message.id)}}">
                   Edit
                 </a>   
                 <input class="btn btn-default btnCustom" type="submit" value="Delete">

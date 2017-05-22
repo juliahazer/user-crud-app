@@ -44,7 +44,7 @@ Messages: {{user.username}}
         {% for message in messages %}
           <tr class="{{ loop.cycle('odd', 'even') }}">
             <td>{{ loop.index }}</td>
-            <td>{{ message.msg_text }}</td>
+            <td>{{  message.msg_text  }}</td>
             <td>
               <form action="{{url_for('msg_show', user_id=user.id, msg_id=message.id)}}?_method=DELETE" method="POST">
                 <a class="btn btn-default btnCustom" href="{{url_for('msg_edit', user_id=user.id, msg_id=message.id)}}">
