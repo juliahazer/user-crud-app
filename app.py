@@ -151,11 +151,11 @@ def msg_new(user_id):
 def msg_show(user_id,msg_id):
   user = User.query.get_or_404(user_id)
   selected_message = Message.query.get_or_404(msg_id)
-  form = MessageForm(request.form, obj=selected_message)
+  msg_form = MessageForm(request.form, obj=selected_message)
 
   #if updating the user & form validates...
-  if request.method == b'PATCH' and form.validate():
-      form.populate_obj(selected_message)
+  if request.method == b'PATCH' and msg_form.validate():
+      msg_form.populate_obj(selected_message)
       db.session.add(selected_message)
       db.session.commit()
       flash('You edited the message. "' + selected_message.msg_text + '"')
@@ -163,7 +163,7 @@ def msg_show(user_id,msg_id):
 
   #if form isn't validating...
   elif request.method == b'PATCH':
-      return render_template('msgs/edit.html', user_id=user.id, msg_id=selected_message.id, form=form)
+      return render_template('msgs/edit.html', user=user, message=selected_message, form=msg_form)
 
   #delete message
   if request.method == b'DELETE':
