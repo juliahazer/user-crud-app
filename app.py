@@ -128,13 +128,7 @@ def new():
 
 @app.route('/users/<int:user_id>/messages')
 def msg_index(user_id):
-  # if request.method == "POST":
-  #   new_msg = Message(request.form['msg_text'], user_id)
-  #   db.session.add(new_msg)
-  #   db.session.commit()
-  #   return redirect(url_for('msg_index', user_id=user_id))
-
-  #else just list the messages  
+  #list the messages  
   user = User.query.get(user_id)
   messages = user.messages
   return render_template('msgs/index.html', messages=messages, user=user)
@@ -148,41 +142,43 @@ def msg_new(user_id):
     new_msg = Message(msg_form.msg_text.data, user_id)
     db.session.add(new_msg)
     db.session.commit()
+    flash('You added the message: "' + msg_form.msg_text.data + '"')
     return redirect(url_for('msg_index', user_id=user_id))
 
   return render_template('msgs/new.html', user=user, form=msg_form)
 
-@app.route('/users/<int:user_id>/messages/<int:msg_id>', methods=['GET', 'DELETE'])
+@app.route('/users/<int:user_id>/messages/<int:msg_id>', methods=['PATCH', 'DELETE'])
 def msg_show(user_id,msg_id):
-  user = User.query.get(user_id)
-  message = Message.query.get(msg_id)
+  user = User.query.get_or_404(user_id)
+  selected_message = Message.query.get_or_404(msg_id)
+  form = MessageForm(request.form, obj=selected_message)
+
+  #if updating the user & form validates...
+  if request.method == b'PATCH' and form.validate():
+      form.populate_obj(selected_message)
+      db.session.add(selected_message)
+      db.session.commit()
+      flash('You edited the message. "' + selected_message.msg_text + '"')
+      return redirect(url_for('msg_index', user_id= user.id))
+
+  #if form isn't validating...
+  elif request.method == b'PATCH':
+      return render_template('msgs/edit.html', user_id=user.id, msg_id=selected_message.id, form=form)
 
   #delete message
   if request.method == b'DELETE':
-    db.session.delete(message)
+    db.session.delete(selected_message)
     db.session.commit()
+    flash('You deleted the message: "' + selected_message.msg_text + '"')
     return redirect(url_for('msg_index', user_id=user.id))
 
-  #else, show the message
-  return render_template('msgs/show.html', user=user, message=message)
-
-@app.route('/users/<int:user_id>/messages/<int:msg_id>/edit', methods=['GET', 'PATCH'])
+@app.route('/users/<int:user_id>/messages/<int:msg_id>/edit')
 def msg_edit(user_id, msg_id):
   user = User.query.get(user_id)
-  message = Message.query.get(msg_id)
-  # msg_form = MessageForm(request.form)
+  selected_message = Message.query.get(msg_id)
+  msg_form = MessageForm(request.form, obj=selected_message)
 
-  #update message
-  if request.method == b'PATCH':
-    message.msg_text = request.form['msg_text']
-    db.session.add(message)
-    db.session.commit()
-    return redirect(url_for('msg_index', user_id = user.id))
-
-  form = MessageForm(obj=message)
-  form.populate_obj(message)
-
-  return render_template('msgs/edit.html', user=user, message=message, form=form)
+  return render_template('msgs/edit.html', user=user, message=selected_message, form=msg_form)
 
 # If we are in production, make sure we DO NOT use the debug mode
 if os.environ.get('ENV') == 'production':

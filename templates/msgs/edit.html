@@ -5,34 +5,42 @@ Message: Edit
 {% endblock %}
 
 {% block content %}
-<h1>Edit the message:</h1>
 
-<form action="{{url_for('msg_edit', user_id=user.id, msg_id=message.id)}}?_method=PATCH" method="POST">
-<!--   {{ form.csrf_token }}
-  <p>
-  {{ form.msg_text.label }}: {{ form.msg_text}}         
-    <span>
-      {% if form.msg_text.errors %}
-        {% for error in form.msg_text.errors %}
-          {{ error }}
-        {% endfor %}
+<div class="container-fluid">
+  {% if get_flashed_messages() %}
+    <div class="alert alert-warning">
+      {% for msg in get_flashed_messages() %}
+        <p class="text-center">{{ msg }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <h1>Edit Message for User: {{ user.username }}</h1>
+
+  <form action="{{url_for('msg_show', user_id=user.id, msg_id=message.id)}}?_method=PATCH" method="POST">
+    {{ form.csrf_token }}
+    {% for field in form %}
+      {% if field.name != 'csrf_token' %}
+        <div class="form-group row">
+          <label class="col-sm-2 col-form-label col-form-label-lg">
+            {{ field.label }}
+          </label> 
+          <div class="col-sm-10">
+            {{ field }}
+            <span>
+              {% if field.errors %}
+                {% for error in field.errors %}
+                  {{ error }}
+                {% endfor %}
+              {% endif %}
+            </span>
+          </div>
+        </div>      
       {% endif %}
-    </span>
-  </p> -->
-  {% for field in form %}
-    {% if field.name != 'csrf_token' %}
-      <p>
-        {{ field.label }}: {{ field }}
-        <span>
-          {% if field.errors %}
-            {% for error in field.errors %}
-              {{ error }}
-            {% endfor %}
-          {% endif %}
-        </span>
-      </p>
-    {% endif %}
-  {% endfor %}
-  <input type="submit" value="Edit Message">
-</form>
+    {% endfor %}
+    <input class="btn btn-default btnCustom" type="submit" value="Edit">
+    <a class="btn btn-default btnCustom" href="{{url_for('msg_index', user_id=user.id)}}">Cancel</a> 
+  </form>
+
+</div>
 {% endblock %}

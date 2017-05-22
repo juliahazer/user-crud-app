@@ -5,22 +5,58 @@ Messages: {{user.username}}
 {% endblock %}
 
 {% block content %}
+<div class="container-fluid">
+  {% if get_flashed_messages() %}
+    <div class="alert alert-warning">
+      {% for msg in get_flashed_messages() %}
+        <p class="text-center">{{ msg }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+  <h1>Messages for User: {{user.username}}</h1>
+</div>
 
-<h1>Here are the messages for {{user.username}}:</h1>
-<ul>
-{% for message in messages %}
-  <li>{{message.msg_text}}<br>
-  <a href="{{url_for('msg_edit', user_id=user.id, msg_id=message.id)}}">Edit</a>  
-  <form action="{{url_for('msg_show', user_id=user.id, msg_id=message.id)}}?_method=DELETE" method="POST">
-    <input type="submit" value="Delete">
-  </form>
-{% endfor %}
-</ul>
+<div class="container-fluid">
+    <a class="btn btn-default btnCustom" href="{{url_for('msg_new', user_id=user.id)}}">
+      Add a Message
+    </a>
+    <a class="btn btn-default btnCustom" href="{{url_for('show', user_id=user.id)}}">
+      Back to User
+    </a>
+</div>
 
-<a href="{{url_for('msg_new', user_id=user.id)}}">Add a message</a>
+<br>
 
-<br><br>
-
-<a href="{{url_for('show', user_id=user.id)}}">Back to User</a>
-
+<div class="container-fluid">
+  {% if messages.all() == [] %}
+    <p>There are no messages for this user.</p>
+  {% endif %}
+  {% if messages.all() != [] %}
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Message</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for message in messages %}
+          <tr class="{{ loop.cycle('odd', 'even') }}">
+            <td>{{ loop.index }}</td>
+            <td>{{  message.msg_text  }}</td>
+            <td>
+              <form action="{{url_for('msg_show', user_id=user.id, msg_id=message.id)}}?_method=DELETE" method="POST">
+                <a class="btn btn-default btnCustom" href="{{url_for('msg_edit', user_id=user.id, msg_id=message.id)}}">
+                  Edit
+                </a>   
+                <input class="btn btn-default btnCustom" type="submit" value="Delete">
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>
 {% endblock %}

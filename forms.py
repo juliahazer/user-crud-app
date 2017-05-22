@@ -14,4 +14,4 @@ class UserForm(FlaskForm): #this is inheriting from FlaskForm class
   last_name = StringField('Last Name', validators =[Length(min=1)])
 
 class MessageForm(FlaskForm):
-  msg_text = TextAreaField('Message', validators = [Length(min=1, max=100)], render_kw={"rows": 10, "cols": 80})
+  msg_text = TextAreaField('Message', validators = [Length(min=1, max=100)], render_kw={"rows": 5, "cols": 40})

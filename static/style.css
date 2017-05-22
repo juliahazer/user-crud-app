@@ -3,6 +3,10 @@ body {
   background-color: #E0FFFF;
 }
 
+a {
+  color: #707F7F
+}
+
 .alert {
   padding: 5px;
 }
@@ -43,6 +47,6 @@ tr.odd td {
     border-color: #707F7F;
 }
 
-a {
-  color: #707F7F
+.messageField {
+  display: inline-block;
 }
